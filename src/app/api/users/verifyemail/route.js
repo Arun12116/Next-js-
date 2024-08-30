@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { connect } from "../../../../db/dbConfig";
 import User from "../../../../models/userModel";
 
-
 connect();
 
 export async function POST(req, resp) {
@@ -27,7 +26,7 @@ export async function POST(req, resp) {
       {
         message: "Email verified successfully",
       },
-      { status: 500 }
+      { status: 200 }
     );
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -15,6 +15,8 @@ const LoginPage = () => {
     (state) => state.auth
   );
 
+  console.log("errrr",error);
+  
   const {
     register,
     handleSubmit,
@@ -26,12 +28,10 @@ const LoginPage = () => {
       // Dispatch login action and wait for it to complete
       await dispatch(loginUser(data)).unwrap();
 
-      // Check if authentication was successful
-      if (isAuthenticated) {
         router.push("/about");
-      }
+      
     } catch (err) {
-      console.error("Login failed:", err.message);
+      console.error("Login failed:", error.message);
     }
   };
 
