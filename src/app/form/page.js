@@ -51,7 +51,7 @@ const Form = () => {
               Name
             </label>
             <input
-              {...register("full_name", {
+              {...register("username", {
                 required: "Please enter your full name",
               })}
               type="text"
@@ -103,7 +103,7 @@ const Form = () => {
             )}
           </div>
 
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2">
               Confirm Password
             </label>
@@ -122,7 +122,7 @@ const Form = () => {
                 {errors.confirm_password.message}
               </p>
             )}
-          </div>
+          </div> */}
 
           <button
             type="submit"
