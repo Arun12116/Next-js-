@@ -6,12 +6,13 @@ import jwt from "jsonwebtoken";
 
 connect();
 
+
+
 export async function POST(req, resp) {
   try {
-    const reqBody = await req.json();
-    const { email, password } = reqBody;
+    const { email, password } = await req.json();
 
-    console.log("Login data received:", reqBody);
+    console.log("Login data received:", { email });
 
     // Find the user by email
     const user = await User.findOne({ email });
@@ -19,10 +20,15 @@ export async function POST(req, resp) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // if (user.isVerified===false) {
-    //   return NextResponse.json({ message: "user not verified" },{status:400});
-    // }
-    // Compare the provided password with the stored hashed password
+    // Check if the user's email is verified
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { message: "User not verified" },
+        { status: 400 }
+      );
+    }
+
+    // Validate the provided password against the stored hashed password
     const isValidPassword = await bcryptjs.compare(password, user.password);
     if (!isValidPassword) {
       return NextResponse.json(
@@ -50,13 +56,15 @@ export async function POST(req, resp) {
 
     response.cookies.set("token", token, {
       httpOnly: true,
-      //   secure: process.env.NODE_ENV === "production", // Ensure the cookie is only sent over HTTPS in production
       maxAge: 24 * 60 * 60, // 1 day
     });
 
     return response;
   } catch (error) {
-    console.error("Error during login:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error during login:", error.message);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

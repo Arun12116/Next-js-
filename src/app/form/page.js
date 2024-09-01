@@ -1,10 +1,12 @@
-"use client";
+"use client"; 
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "../Redux/authSlice";
 import NavBar from "../navbar/page";
 import { useRouter } from "next/navigation";
+import { TailSpin } from "react-loader-spinner"; 
 
 const Form = () => {
   const {
@@ -20,16 +22,13 @@ const Form = () => {
   );
 
   const password = watch("password");
-  const confirmPassword = watch("confirm_password");
 
   const onSubmit = async (data) => {
     try {
       const resultAction = await dispatch(registerUser(data)).unwrap();
       console.log("token", resultAction);
-      // Check if the registration was successful
       router.push("/loginPage");
     } catch (err) {
-      // Handle errors, if any
       console.error("Registration failed:", err);
     }
   };
@@ -58,9 +57,9 @@ const Form = () => {
               placeholder="Enter your name"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.full_name && (
+            {errors.username && (
               <p className="text-red-700 text-sm mt-1">
-                {errors.full_name.message}
+                {errors.username.message}
               </p>
             )}
           </div>
@@ -103,36 +102,28 @@ const Form = () => {
             )}
           </div>
 
-          {/* <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Confirm Password
-            </label>
-            <input
-              {...register("confirm_password", {
-                required: "Please confirm your password",
-                validate: (value) =>
-                  value === password || "Passwords do not match",
-              })}
-              type="password"
-              placeholder="Confirm your password"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.confirm_password && (
-              <p className="text-red-700 text-sm mt-1">
-                {errors.confirm_password.message}
-              </p>
-            )}
-          </div> */}
+          {loading && (
+            <div className="flex justify-center mb-4">
+              <TailSpin
+                height="50"
+                width="50"
+                color="#4A90E2"
+                ariaLabel="loading"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading} 
           >
             Register
           </button>
 
-          {loading && <p className="mt-2">Loading...</p>}
-          {error && <p className="text-red-700 mt-2">{error}</p>}
+          {error && (
+            <p className="text-red-700 text-sm mt-4">{error}</p>
+          )}
         </form>
       </div>
     </div>

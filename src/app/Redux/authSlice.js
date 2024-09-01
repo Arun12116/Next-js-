@@ -2,9 +2,10 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Login user
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async (credentials, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: "POST",
@@ -14,18 +15,20 @@ export const loginUser = createAsyncThunk(
         body: JSON.stringify(credentials),
       });
 
-      if (!response.ok) {
-        throw new Error("Login failed");
+      if (response.ok) {
+        const data = await response.json();
+        return fulfillWithValue(data.message || "Login successful");
+      } else {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.error || "Login failed");
       }
-
-      const data = await response.json();
-      return { accessToken: data.accessToken };
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || "Login failed");
     }
   }
 );
 
+// Register user
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (userDetails, { rejectWithValue }) => {
@@ -39,41 +42,18 @@ export const registerUser = createAsyncThunk(
       });
 
       if (!response.ok) {
-        throw new Error("Registration failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Registration failed");
       }
 
-      const data = await response.json();
-
-      console.log(data.user.isVerified);
-
-      return data;
+      return await response.json();
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  "auth/logoutUser",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/users/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-      return {};
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
+// Verify user email
 export const verifyUserEmail = createAsyncThunk(
   "auth/verifyUserEmail",
   async (token, { rejectWithValue }) => {
@@ -87,51 +67,141 @@ export const verifyUserEmail = createAsyncThunk(
       });
 
       if (!response.ok) {
-        throw new Error("Email verification failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Email verification failed");
       }
 
-      const data = await response.json();
-      return data;
+      return await response.json();
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
 
-export const authSlice = createSlice({
+// Get user
+export const getUser = createAsyncThunk(
+  "auth/getUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "User not found");
+      }
+
+      const data = await response.json(); 
+      return data; 
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+
+// Logout user
+export const logoutUser = createAsyncThunk(
+  "auth/logoutUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Logout failed");
+      }
+
+      // Reset the cookie
+      document.cookie =
+        "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+      return { message: "Logout successful" };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+const authSlice = createSlice({
   name: "auth",
   initialState: {
     loading: false,
     error: null,
+    isLogin: false,
+    success: null,
+    users:[]
   },
   reducers: {
-    logout: (state) => {
-      state.accessToken = null;
+    setIslogin: (state, action) => {
+      state.isLogin = action.payload;
     },
-  },
+    setUser:(state,action)=>{
+    state.users=action.payload;
 
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.verifyToken = action.payload.verifyToken;
+        state.success = action.payload;
+        state.error = null;
       })
-
-      .addCase(loginUser.rejected, (state, action) => {
-        console.log("action", action);
-
+      .addCase(registerUser.pending, (state, action) => {
+        state.loading = true;
+        state.error = action.payload;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(verifyUserEmail.rejected, (state, action) => {
-        console.log("state", state);
 
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isLogin = true;
+        state.success = action.payload;
+        state.error = null;
+      })
+      .addCase(loginUser.pending, (state, action) => {
+        state.loading = true;
+        state.error = action.payload;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(verifyUserEmail.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = action.payload;
+        state.error = null;
+      })
+      .addCase(verifyUserEmail.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(logoutUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isLogin = false;
+        state.success = action.payload.message;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { setIslogin,setUser } = authSlice.actions;
 
 export default authSlice.reducer;
