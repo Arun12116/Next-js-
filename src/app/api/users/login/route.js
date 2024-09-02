@@ -50,6 +50,7 @@ export async function POST(req, resp) {
 
     // Set the token in an HTTP-only cookie
     const response = NextResponse.json({
+      token:token,
       message: "Login successful",
       success: true,
     });

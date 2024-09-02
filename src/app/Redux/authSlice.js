@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Login user
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials, { rejectWithValue, fulfillWithValue }) => {
@@ -17,6 +16,12 @@ export const loginUser = createAsyncThunk(
 
       if (response.ok) {
         const data = await response.json();
+
+        // Store the token in localStorage
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
+
         return fulfillWithValue(data.message || "Login successful");
       } else {
         const errorData = await response.json();
@@ -95,19 +100,17 @@ export const getUser = createAsyncThunk(
         throw new Error(errorData.error || "User not found");
       }
 
-      const data = await response.json(); 
-      return data; 
+      const data = await response.json();
+      return data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
-
-
-// Logout user
+//logout
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, fulfillWithValue }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/logout`, {
         method: "POST",
@@ -116,18 +119,18 @@ export const logoutUser = createAsyncThunk(
         },
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        localStorage.removeItem("token");
+        document.cookie =
+          "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+        return fulfillWithValue({ message: "Logout successful" });
+      } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Logout failed");
+        return rejectWithValue(errorData.error || "Logout failed");
       }
-
-      // Reset the cookie
-      document.cookie =
-        "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-      return { message: "Logout successful" };
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || "Logout failed");
     }
   }
 );
@@ -139,16 +142,15 @@ const authSlice = createSlice({
     error: null,
     isLogin: false,
     success: null,
-    users:[]
+    users: [],
   },
   reducers: {
     setIslogin: (state, action) => {
       state.isLogin = action.payload;
     },
-    setUser:(state,action)=>{
-    state.users=action.payload;
-
-    }
+    setUser: (state, action) => {
+      state.users = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -202,6 +204,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setIslogin,setUser } = authSlice.actions;
+export const { setIslogin, setUser } = authSlice.actions;
 
 export default authSlice.reducer;

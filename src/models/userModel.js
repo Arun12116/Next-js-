@@ -1,40 +1,4 @@
-// import mongoose from "mongoose";
-
-// const userSchema = new mongoose.Schema({
-//   username: {
-//     type: String,
-//     required: [true, "Please provide a username"],
-//     unique: true,
-//   },
-//   email: {
-//     type: String,
-//     required: [true, "please provide  user name"],
-//     unique: true,
-//   },
-//   password: {
-//     type: String,
-//     required: [true, "please provide  userPassword"],
-//     unique: true,
-//   },
-//   isVerified: {
-//     type: Boolean,
-//     default: false,
-//   },
-//   isAdmin: {
-//     type: Boolean,
-//     default: false,
-//   },
-//   forgotPasswordToken: String,
-//   forgotPasswordTokeExpiry: Date,
-//   verifyToken: String,
-//   verifyTokenExpiry: Date,
-// });
-
-// const User = mongoose.model.users || mongoose.model("users", userSchema);
-// export default User;
 import mongoose from "mongoose";
-
-// Check if the model is already defined to avoid OverwriteModelError
 const UserSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -57,6 +21,10 @@ const UserSchema = new mongoose.Schema({
   isAdmin: {
     type: Boolean,
     default: false,
+  },
+  profileImage: {
+    data: Buffer, 
+    contentType: String, 
   },
   forgotPasswordToken: String,
   forgotPasswordTokenExpiry: Date,
